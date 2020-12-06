@@ -1,4 +1,6 @@
 ﻿using Microsoft.Win32;
+using Excel = Microsoft.Office.Interop.Excel;
+using System.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,8 +33,55 @@ namespace PfuOptimizerWpf
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true) {
                 Console.WriteLine(openFileDialog.FileName);
+                Excel._Application oApp = new Excel.Application();
+                oApp.Visible = true;
+
+                Excel.Workbook oWorkbook = oApp.Workbooks.Open(openFileDialog.FileName);
+                Excel.Worksheet oWorksheet = oWorkbook.Worksheets["ПАРФОМЧУК"];
+
+                // Reading
+                int colNo = oWorksheet.UsedRange.Columns.Count;
+                int rowNo = oWorksheet.UsedRange.Rows.Count;
+                object[,] array = oWorksheet.UsedRange.Value;
+                for (int j = 1; j <= colNo; j++)
+                {
+                    for (int i = 1; i <= rowNo; i++)
+                    {
+                        if (array[i, j] != null)
+                            if (array[i, j].ToString() == "Коефіцієнт ЗП місячний ***")
+                            {
+                                for (int m = i + 1; m < rowNo; m++)
+                                {
+                                    /* if (Convert.ToInt32(array[m, j].ToString()) > 50)
+                                    {
+                                        array[m, j + 1] = "Yes";
+                                    } */
+                                    Console.WriteLine(array[m, j]);
+                                }
+
+                                // set the value back into the range.
+                                // oWorksheet.UsedRange.Value = array;
+                                return;
+                            }
+                    }
+                }
+
+                // Optimization
+
+                //oWorkbook.Save();
+                oWorkbook.Close();
+                oApp.Quit();
+
+                oWorksheet = null;
+                oWorkbook = null;
+                oApp = null;
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
-                // txtEditor.Text = File.ReadAllText(openFileDialog.FileName);
+            // txtEditor.Text = File.ReadAllText(openFileDialog.FileName);
         }
     }
 }
