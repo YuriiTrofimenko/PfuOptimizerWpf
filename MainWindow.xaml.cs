@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using PfuOptimizerWpf.Models;
 
 namespace PfuOptimizerWpf
 {
@@ -23,7 +24,7 @@ namespace PfuOptimizerWpf
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<double> ratios = new List<double>();
+        private List<MonthModel> ratios = new List<MonthModel>();
         public MainWindow()
         {
             InitializeComponent();
@@ -63,7 +64,7 @@ namespace PfuOptimizerWpf
                                     if (array[m, j]?.GetType().Name == "Double")
                                     {
                                         // Console.WriteLine(array[m, j]);
-                                        ratios.Add((double)array[m, j]);
+                                        ratios.Add(new MonthModel() { RowNo = m, Ratio = (double)array[m, j] });
                                     }
                                     /* else {
                                         ratios.Add(0d);
@@ -81,7 +82,7 @@ namespace PfuOptimizerWpf
             // Output
             OUTPUT:
                 // Console.WriteLine("Ratios: " + ratios.Count);
-                // ratios.ForEach(Console.WriteLine);
+                ratios.ForEach(Console.WriteLine);
 
                 // Optimization
                 int count = ratios.Count;
