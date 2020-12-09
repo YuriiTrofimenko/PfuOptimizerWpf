@@ -23,6 +23,7 @@ namespace PfuOptimizerWpf
     /// </summary>
     public partial class MainWindow : Window
     {
+        private List<double> ratios = new List<double>();
         public MainWindow()
         {
             InitializeComponent();
@@ -34,7 +35,7 @@ namespace PfuOptimizerWpf
             if (openFileDialog.ShowDialog() == true) {
                 Console.WriteLine(openFileDialog.FileName);
                 Excel._Application oApp = new Excel.Application();
-                oApp.Visible = true;
+                // oApp.Visible = true;
 
                 Excel.Workbook oWorkbook = oApp.Workbooks.Open(openFileDialog.FileName);
                 Excel.Worksheet oWorksheet = oWorkbook.Worksheets["ПАРФОМЧУК"];
@@ -42,6 +43,7 @@ namespace PfuOptimizerWpf
                 // Reading
                 int colNo = oWorksheet.UsedRange.Columns.Count;
                 int rowNo = oWorksheet.UsedRange.Rows.Count;
+                // Console.WriteLine("Rows: " + (rowNo - 1));
                 object[,] array = oWorksheet.UsedRange.Value;
                 for (int j = 1; j <= colNo; j++)
                 {
@@ -56,17 +58,41 @@ namespace PfuOptimizerWpf
                                     {
                                         array[m, j + 1] = "Yes";
                                     } */
-                                    Console.WriteLine(array[m, j]);
+                                    // Console.WriteLine(array[m, j]);
+                                    // Console.WriteLine(array[m, j]?.GetType().Name);
+                                    if (array[m, j]?.GetType().Name == "Double")
+                                    {
+                                        // Console.WriteLine(array[m, j]);
+                                        ratios.Add((double)array[m, j]);
+                                    }
+                                    /* else {
+                                        ratios.Add(0d);
+                                    } */
+                                    // ratios.Add((double)array[m, j]);
                                 }
 
                                 // set the value back into the range.
                                 // oWorksheet.UsedRange.Value = array;
-                                return;
+                                goto OUTPUT;
                             }
                     }
                 }
 
+            // Output
+            OUTPUT:
+                // Console.WriteLine("Ratios: " + ratios.Count);
+                // ratios.ForEach(Console.WriteLine);
+
                 // Optimization
+                int count = ratios.Count;
+                int tenPercentCount = (int) Math.Round((double)count * 0.1);
+                Console.WriteLine("Ten Percent Count: " + tenPercentCount);
+                int exclusionsCountLimit = tenPercentCount;
+                if (exclusionsCountLimit > 60)
+                {
+                    exclusionsCountLimit = 60;
+                }
+                Console.WriteLine("Exclusions Count Limit: " + exclusionsCountLimit);
 
                 //oWorkbook.Save();
                 oWorkbook.Close();
