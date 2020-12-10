@@ -16,14 +16,21 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using PfuOptimizerWpf.Models;
+using Microsoft.Office.Interop.Excel;
+using System.ComponentModel;
 
 namespace PfuOptimizerWpf
 {
     /// <summary>
     /// Логика взаимодействия для MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
+        private Excel._Application oApp;
+        private Excel.Workbook oWorkbook;
+        private Excel.Worksheet oWorksheet;
+        private bool isDisposed = true;
+
         private List<MonthModel> ratios = new List<MonthModel>();
         private List<ExclusionRangeModel> exclusionRanges = new List<ExclusionRangeModel>();
         ExclusionRangeModel optimalExclusionRange =
@@ -40,125 +47,126 @@ namespace PfuOptimizerWpf
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true) {
                 Console.WriteLine(openFileDialog.FileName);
-                Excel._Application oApp = new Excel.Application();
-                oApp.Visible = true;
+                oApp = new Excel.Application();
+                this.isDisposed = false;
+                // oApp.Visible = true;
 
-                Excel.Workbook oWorkbook = oApp.Workbooks.Open(openFileDialog.FileName);
-                Excel.Worksheet oWorksheet = oWorkbook.Worksheets["ПАРФОМЧУК"];
-
-                // Reading
-                int colNo = oWorksheet.UsedRange.Columns.Count;
-                int rowNo = oWorksheet.UsedRange.Rows.Count;
-                // Console.WriteLine("Rows: " + (rowNo - 1));
-                object[,] array = oWorksheet.UsedRange.Value;
-                for (int j = 1; j <= colNo; j++)
+                oWorkbook = oApp.Workbooks.Open(openFileDialog.FileName);
+                List<string> sheetNames = new List<string>();
+                foreach (Worksheet worksheet in oWorkbook.Worksheets)
                 {
-                    for (int i = 1; i <= rowNo; i++)
-                    {
-                        if (array[i, j] != null)
-                            if (array[i, j].ToString() == "Коефіцієнт ЗП місячний ***")
-                            {
-                                ratiosColumnNo = j;
-                                firstRatiosRowNo = i + 1;
-                                for (int m = firstRatiosRowNo; m < rowNo; m++)
-                                {
-                                    /* if (Convert.ToInt32(array[m, j].ToString()) > 50)
-                                    {
-                                        array[m, j + 1] = "Yes";
-                                    } */
-                                    // Console.WriteLine(array[m, j]);
-                                    // Console.WriteLine(array[m, j]?.GetType().Name);
-                                    if (array[m, j]?.GetType().Name == "Double")
-                                    {
-                                        // Console.WriteLine(array[m, j]);
-                                        ratios.Add(new MonthModel() { RowNo = m, Ratio = (double)array[m, j] });
-                                    }
-                                    /* else {
-                                        ratios.Add(0d);
-                                    } */
-                                    // ratios.Add((double)array[m, j]);
-                                }
-
-                                // set the value back into the range.
-                                // oWorksheet.UsedRange.Value = array;
-                                goto OUTPUT;
-                            }
-                    }
+                    sheetNames.Add(worksheet.Name);
                 }
+                sheetsComboBox.ItemsSource = sheetNames;
+            }
+            // txtEditor.Text = File.ReadAllText(openFileDialog.FileName);
+        }
 
-            // Output
-            OUTPUT:
-                // Console.WriteLine("Ratios: " + ratios.Count);
-                // ratios.ForEach(Console.WriteLine);
+        private void sheetsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // oWorksheet = oWorkbook.Worksheets["ПАРФОМЧУК"];
+            Console.WriteLine(sheetsComboBox.SelectedValue);
+            oWorksheet = oWorkbook.Worksheets[sheetsComboBox.SelectedValue];
+        }
 
-                // Optimization
-                int count = ratios.Count;
-                int tenPercentCount = (int) Math.Round((double)count * 0.1);
-                Console.WriteLine("Ten Percent Count: " + tenPercentCount);
-                int exclusionsCountLimit = tenPercentCount;
-                if (exclusionsCountLimit > 60)
+        private void optimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Reading
+            int colNo = oWorksheet.UsedRange.Columns.Count;
+            int rowNo = oWorksheet.UsedRange.Rows.Count;
+            // Console.WriteLine("Rows: " + (rowNo - 1));
+            object[,] array = oWorksheet.UsedRange.Value;
+            for (int j = 1; j <= colNo; j++)
+            {
+                for (int i = 1; i <= rowNo; i++)
                 {
-                    exclusionsCountLimit = 60;
-                }
-                Console.WriteLine("Max Exclusions Count Limit: " + exclusionsCountLimit);
-
-                while (exclusionsCountLimit > 0)
-                {
-                    int currentFirstRowNo = ratios.First().RowNo;
-                    int currentLastRowNo = currentFirstRowNo + exclusionsCountLimit;
-                    while (currentLastRowNo <= ratios.Last().RowNo)
-                    {
-                        /* exclusionRanges.Add(
-                            new ExclusionRangeModel() {
-                                FirstRowNo = currentFirstRowNo,
-                                LastRowNo = currentLastRowNo,
-                                AvgRatioAfterOptimization =
-                                   ratios.Where(
-                                        r => !Enumerable
-                                                .Range(currentFirstRowNo, currentLastRowNo)
-                                                .Contains(r.RowNo)
-                                    ).Average(r => r.Ratio)
-                            }
-                        ); */
-                        double avgRatioAfterOptimization =
-                                   ratios.Where(
-                                        r => !Enumerable
-                                                .Range(currentFirstRowNo, currentLastRowNo)
-                                                .Contains(r.RowNo)
-                                    ).Average(r => r.Ratio);
-                        if (avgRatioAfterOptimization > optimalExclusionRange.AvgRatioAfterOptimization)
+                    if (array[i, j] != null)
+                        if (array[i, j].ToString() == "Коефіцієнт ЗП місячний ***")
                         {
-                            optimalExclusionRange.FirstRowNo = currentFirstRowNo;
-                            optimalExclusionRange.LastRowNo = currentLastRowNo;
-                            optimalExclusionRange.AvgRatioAfterOptimization = avgRatioAfterOptimization;
+                            ratiosColumnNo = j;
+                            firstRatiosRowNo = i + 1;
+                            for (int m = firstRatiosRowNo; m < rowNo; m++)
+                            {
+                                // Console.WriteLine(array[m, j]);
+                                // Console.WriteLine(array[m, j]?.GetType().Name);
+                                if (array[m, j]?.GetType().Name == "Double"
+                                    && array[m, j + 1] != null)
+                                {
+                                    // Console.WriteLine(array[m, j]);
+                                    ratios.Add(new MonthModel() { RowNo = m, Ratio = (double)array[m, j] });
+                                }
+                                // ratios.Add((double)array[m, j]);
+                            }
+
+                            // set the value back into the range.
+                            // oWorksheet.UsedRange.Value = array;
+                            goto OUTPUT;
                         }
-                        currentFirstRowNo++;
-                        currentLastRowNo++;
-                    }
-                    exclusionsCountLimit--;
                 }
+            }
 
-                /* ExclusionRangeModel optimalExclusionRange =
-                    exclusionRanges.Where(
-                        r1 => r1.AvgRatioAfterOptimization ==
-                                    exclusionRanges.Max(r2 => r2.AvgRatioAfterOptimization)
-                    ).SingleOrDefault(); */
+        // Output
+        OUTPUT:
+            // Console.WriteLine("Ratios: " + ratios.Count);
+            // ratios.ForEach(Console.WriteLine);
 
-                double avgRatioBeforeOptimization = ratios.Average(r => r.Ratio);
-                Console.WriteLine("Average Ratio Before Optimization: " + avgRatioBeforeOptimization);
-                Console.WriteLine("Optimal Exclusion Range: " + optimalExclusionRange);
+            // Optimization
+            int count = ratios.Count;
+            int tenPercentCount = (int)Math.Round((double)count * 0.1);
+            Console.WriteLine("Ten Percent Count: " + tenPercentCount);
+            int exclusionsCountLimit = tenPercentCount;
+            if (exclusionsCountLimit > 60)
+            {
+                exclusionsCountLimit = 60;
+            }
+            Console.WriteLine("Max Exclusions Count Limit: " + exclusionsCountLimit);
 
-                // Marking
-                foreach (int exRowNo in Enumerable.Range(
-                        optimalExclusionRange.FirstRowNo,
-                        optimalExclusionRange.LastRowNo
-                    ))
+            while (exclusionsCountLimit > 0)
+            {
+                int currentFirstRowNo = ratios.First().RowNo;
+                int currentLastRowNo = currentFirstRowNo + exclusionsCountLimit;
+                while (currentLastRowNo <= ratios.Last().RowNo)
                 {
-                    array[exRowNo, ratiosColumnNo + 2] = "-";
+                    double avgRatioAfterOptimization =
+                               ratios.Where(
+                                    r => !Enumerable
+                                            .Range(currentFirstRowNo, currentLastRowNo)
+                                            .Contains(r.RowNo)
+                                ).Average(r => r.Ratio);
+                    if (avgRatioAfterOptimization > optimalExclusionRange.AvgRatioAfterOptimization)
+                    {
+                        optimalExclusionRange.FirstRowNo = currentFirstRowNo;
+                        optimalExclusionRange.LastRowNo = currentLastRowNo;
+                        optimalExclusionRange.AvgRatioAfterOptimization = avgRatioAfterOptimization;
+                    }
+                    currentFirstRowNo++;
+                    currentLastRowNo++;
                 }
-                oWorksheet.UsedRange.Value = array;
+                exclusionsCountLimit--;
+            }
 
-                oWorkbook.Save();
+            double avgRatioBeforeOptimization = ratios.Average(r => r.Ratio);
+            Console.WriteLine("Average Ratio Before Optimization: " + avgRatioBeforeOptimization);
+            Console.WriteLine("Optimal Exclusion Range: " + optimalExclusionRange);
+
+            // Marking
+            foreach (int exRowNo in Enumerable.Range(
+                    optimalExclusionRange.FirstRowNo,
+                    optimalExclusionRange.LastRowNo
+                ))
+            {
+                array[exRowNo, ratiosColumnNo + 2] = "-";
+            }
+            oWorksheet.UsedRange.Value = array;
+
+            oWorkbook.Save();
+
+            disposeResources();
+        }
+
+        private void disposeResources() {
+            if (!this.isDisposed)
+            {
                 oWorkbook.Close();
                 oApp.Quit();
 
@@ -170,8 +178,15 @@ namespace PfuOptimizerWpf
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
+
+                this.isDisposed = true;
             }
-            // txtEditor.Text = File.ReadAllText(openFileDialog.FileName);
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            disposeResources();
+            base.OnClosing(e);
         }
     }
 }

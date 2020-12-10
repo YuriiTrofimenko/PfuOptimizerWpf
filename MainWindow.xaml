@@ -8,9 +8,13 @@
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"></ColumnDefinition>
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
@@ -26,5 +30,30 @@
             Padding="5">
             Выбрать таблицу
         </Button>
+        <TextBlock
+            Grid.Column="0"
+            Grid.Row="1">
+            Лист
+        </TextBlock>
+        <ComboBox
+            x:Name="sheetsComboBox"
+            Grid.Column="0"
+            Grid.Row="2"
+            IsEditable="True"
+            IsReadOnly="True"
+            Text="Выбрать лист" SelectionChanged="sheetsComboBox_SelectionChanged"/>
+        <Button
+            x:Name="optimizeButton"
+            Click="optimizeButton_Click"
+            Grid.Column="0"
+            Grid.Row="3"
+            Width="120"
+            Height="30"
+            HorizontalAlignment="Left"
+            Margin="10"
+            Padding="5">
+            Оптимизировать
+        </Button>
+        
     </Grid>
 </Window>
