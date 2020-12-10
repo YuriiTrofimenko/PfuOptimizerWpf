@@ -28,6 +28,8 @@ namespace PfuOptimizerWpf
         private List<ExclusionRangeModel> exclusionRanges = new List<ExclusionRangeModel>();
         ExclusionRangeModel optimalExclusionRange =
             new ExclusionRangeModel() { AvgRatioAfterOptimization = 0 };
+        private int ratiosColumnNo = 0;
+        private int firstRatiosRowNo = 0;
         public MainWindow()
         {
             InitializeComponent();
@@ -39,7 +41,7 @@ namespace PfuOptimizerWpf
             if (openFileDialog.ShowDialog() == true) {
                 Console.WriteLine(openFileDialog.FileName);
                 Excel._Application oApp = new Excel.Application();
-                // oApp.Visible = true;
+                oApp.Visible = true;
 
                 Excel.Workbook oWorkbook = oApp.Workbooks.Open(openFileDialog.FileName);
                 Excel.Worksheet oWorksheet = oWorkbook.Worksheets["ПАРФОМЧУК"];
@@ -56,7 +58,9 @@ namespace PfuOptimizerWpf
                         if (array[i, j] != null)
                             if (array[i, j].ToString() == "Коефіцієнт ЗП місячний ***")
                             {
-                                for (int m = i + 1; m < rowNo; m++)
+                                ratiosColumnNo = j;
+                                firstRatiosRowNo = i + 1;
+                                for (int m = firstRatiosRowNo; m < rowNo; m++)
                                 {
                                     /* if (Convert.ToInt32(array[m, j].ToString()) > 50)
                                     {
@@ -144,7 +148,17 @@ namespace PfuOptimizerWpf
                 Console.WriteLine("Average Ratio Before Optimization: " + avgRatioBeforeOptimization);
                 Console.WriteLine("Optimal Exclusion Range: " + optimalExclusionRange);
 
-                //oWorkbook.Save();
+                // Marking
+                foreach (int exRowNo in Enumerable.Range(
+                        optimalExclusionRange.FirstRowNo,
+                        optimalExclusionRange.LastRowNo
+                    ))
+                {
+                    array[exRowNo, ratiosColumnNo + 2] = "-";
+                }
+                oWorksheet.UsedRange.Value = array;
+
+                oWorkbook.Save();
                 oWorkbook.Close();
                 oApp.Quit();
 
