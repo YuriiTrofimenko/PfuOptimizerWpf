@@ -25,6 +25,9 @@ namespace PfuOptimizerWpf
     public partial class MainWindow : Window
     {
         private List<MonthModel> ratios = new List<MonthModel>();
+        private List<ExclusionRangeModel> exclusionRanges = new List<ExclusionRangeModel>();
+        ExclusionRangeModel optimalExclusionRange =
+            new ExclusionRangeModel() { AvgRatioAfterOptimization = 0 };
         public MainWindow()
         {
             InitializeComponent();
@@ -82,7 +85,7 @@ namespace PfuOptimizerWpf
             // Output
             OUTPUT:
                 // Console.WriteLine("Ratios: " + ratios.Count);
-                ratios.ForEach(Console.WriteLine);
+                // ratios.ForEach(Console.WriteLine);
 
                 // Optimization
                 int count = ratios.Count;
@@ -93,7 +96,53 @@ namespace PfuOptimizerWpf
                 {
                     exclusionsCountLimit = 60;
                 }
-                Console.WriteLine("Exclusions Count Limit: " + exclusionsCountLimit);
+                Console.WriteLine("Max Exclusions Count Limit: " + exclusionsCountLimit);
+
+                while (exclusionsCountLimit > 0)
+                {
+                    int currentFirstRowNo = ratios.First().RowNo;
+                    int currentLastRowNo = currentFirstRowNo + exclusionsCountLimit;
+                    while (currentLastRowNo <= ratios.Last().RowNo)
+                    {
+                        /* exclusionRanges.Add(
+                            new ExclusionRangeModel() {
+                                FirstRowNo = currentFirstRowNo,
+                                LastRowNo = currentLastRowNo,
+                                AvgRatioAfterOptimization =
+                                   ratios.Where(
+                                        r => !Enumerable
+                                                .Range(currentFirstRowNo, currentLastRowNo)
+                                                .Contains(r.RowNo)
+                                    ).Average(r => r.Ratio)
+                            }
+                        ); */
+                        double avgRatioAfterOptimization =
+                                   ratios.Where(
+                                        r => !Enumerable
+                                                .Range(currentFirstRowNo, currentLastRowNo)
+                                                .Contains(r.RowNo)
+                                    ).Average(r => r.Ratio);
+                        if (avgRatioAfterOptimization > optimalExclusionRange.AvgRatioAfterOptimization)
+                        {
+                            optimalExclusionRange.FirstRowNo = currentFirstRowNo;
+                            optimalExclusionRange.LastRowNo = currentLastRowNo;
+                            optimalExclusionRange.AvgRatioAfterOptimization = avgRatioAfterOptimization;
+                        }
+                        currentFirstRowNo++;
+                        currentLastRowNo++;
+                    }
+                    exclusionsCountLimit--;
+                }
+
+                /* ExclusionRangeModel optimalExclusionRange =
+                    exclusionRanges.Where(
+                        r1 => r1.AvgRatioAfterOptimization ==
+                                    exclusionRanges.Max(r2 => r2.AvgRatioAfterOptimization)
+                    ).SingleOrDefault(); */
+
+                double avgRatioBeforeOptimization = ratios.Average(r => r.Ratio);
+                Console.WriteLine("Average Ratio Before Optimization: " + avgRatioBeforeOptimization);
+                Console.WriteLine("Optimal Exclusion Range: " + optimalExclusionRange);
 
                 //oWorkbook.Save();
                 oWorkbook.Close();
