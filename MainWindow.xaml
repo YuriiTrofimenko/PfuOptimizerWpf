@@ -16,44 +16,56 @@
             <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition Height="auto"></RowDefinition>
             <RowDefinition Height="auto"></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Button
-            x:Name="chooseTableButton"
-            Click="chooseTableButton_Click"
+        <StackPanel
+            Orientation="Vertical"
             Grid.Column="0"
             Grid.Row="0"
-            Width="120"
-            Height="30"
-            HorizontalAlignment="Left"
-            Margin="10"
-            Padding="5">
-            Выбрать таблицу
-        </Button>
-        <TextBlock
-            Grid.Column="0"
-            Grid.Row="1">
-            Лист
-        </TextBlock>
-        <ComboBox
-            x:Name="sheetsComboBox"
-            Grid.Column="0"
-            Grid.Row="2"
-            IsEditable="True"
-            IsReadOnly="True"
-            Text="Выбрать лист" SelectionChanged="sheetsComboBox_SelectionChanged"/>
-        <Button
-            x:Name="optimizeButton"
-            Click="optimizeButton_Click"
-            Grid.Column="0"
-            Grid.Row="3"
-            Width="120"
-            Height="30"
-            HorizontalAlignment="Left"
-            Margin="10"
-            Padding="5">
-            Оптимизировать
-        </Button>
-        
+            Margin="10">
+            <Button
+                x:Name="chooseTableButton"
+                Click="chooseTableButton_Click"
+                Width="120"
+                Height="30"
+                HorizontalAlignment="Left"
+                Padding="5"
+                Margin="0 5 0 5">
+                Выбрать таблицу
+            </Button>
+            <TextBlock>
+                Лист
+            </TextBlock>
+            <ComboBox
+                x:Name="sheetsComboBox"
+                IsEditable="True"
+                IsReadOnly="True"
+                Text="Выбрать лист" SelectionChanged="sheetsComboBox_SelectionChanged"
+                Margin="0 5 0 5"/>
+            <TextBlock>
+                Колонка коэффициентов 
+            </TextBlock>
+            <TextBox
+                x:Name="ratioColumnNameTextBox"
+                Margin="0 5 0 5" TextChanged="ratioColumnNameTextBox_TextChanged"></TextBox>
+            <TextBlock>
+                Месяцев стажа
+            </TextBlock>
+            <TextBox
+                x:Name="experienceMonthTextBox"
+                Margin="0 5 0 5" TextChanged="experienceMonthTextBox_TextChanged"></TextBox>
+            <Button
+                x:Name="optimizeButton"
+                Click="optimizeButton_Click"
+                Width="120"
+                Height="30"
+                HorizontalAlignment="Left"
+                Padding="5"
+                Margin="0 5 0 5">
+                Оптимизировать
+            </Button>
+        </StackPanel>
+
+
     </Grid>
 </Window>

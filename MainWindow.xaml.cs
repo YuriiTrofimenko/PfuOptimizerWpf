@@ -38,10 +38,15 @@ namespace PfuOptimizerWpf
         private int ratiosColumnNo = 0;
         private int firstRatiosRowNo = 0;
 
+        private static readonly string DEFAULT_RATIO_COLUMN_NAME = "Коефіцієнт ЗП місячний ***";
+        private string ratioColumnName;
+        private string experienceMonthString = "";
+
         private string windowTitle;
         public MainWindow()
         {
             InitializeComponent();
+            ratioColumnNameTextBox.Text = DEFAULT_RATIO_COLUMN_NAME;
         }
 
         private void chooseTableButton_Click(object sender, RoutedEventArgs e)
@@ -96,30 +101,24 @@ namespace PfuOptimizerWpf
                 // Reading
                 int colNo = oWorksheet.UsedRange.Columns.Count;
                 int rowNo = oWorksheet.UsedRange.Rows.Count;
-                // Console.WriteLine("Rows: " + (rowNo - 1));
                 object[,] array = oWorksheet.UsedRange.Value;
                 for (int j = 1; j <= colNo; j++)
                 {
                     for (int i = 1; i <= rowNo; i++)
                     {
                         if (array[i, j] != null)
-                            if (array[i, j].ToString() == "Коефіцієнт ЗП місячний ***")
+                            if (array[i, j].ToString() == this.ratioColumnName)
                             {
                                 ratiosColumnNo = j;
                                 firstRatiosRowNo = i + 1;
                                 for (int m = firstRatiosRowNo; m < rowNo; m++)
                                 {
-                                    // Console.WriteLine(array[m, j]);
-                                    // Console.WriteLine(array[m, j]?.GetType().Name);
                                     if (array[m, j]?.GetType().Name == "Double"
                                         && array[m, j + 1] != null)
                                     {
-                                        // Console.WriteLine(array[m, j]);
                                         ratios.Add(new MonthModel() { RowNo = m, Ratio = (double)array[m, j] });
                                     }
-                                    // ratios.Add((double)array[m, j]);
                                 }
-
                                 // set the value back into the range.
                                 // oWorksheet.UsedRange.Value = array;
                                 goto OUTPUT;
@@ -129,55 +128,80 @@ namespace PfuOptimizerWpf
 
             // Output
             OUTPUT:
-                // Console.WriteLine("Ratios: " + ratios.Count);
-                // ratios.ForEach(Console.WriteLine);
-
                 // Optimization
-                int count = ratios.Count;
-                int tenPercentCount = (int)Math.Round((double)count * 0.1);
+                // полное число месяцев работы, в соответствии с числом коэффициентов,
+                // считанных из колонки
+                int experienceMonthFull = ratios.Count;
+                // если поле числа месяцев стажа пусто -
+                // принимаем для расчета полное число месяцев работы
+                int expirienceMonthComputed =
+                    this.experienceMonthString == ""
+                        ? experienceMonthFull
+                        : Int32.Parse(this.experienceMonthString);
+                // берем 10% от всех месяцев стажа
+                int tenPercentCount =
+                    (int)Math.Round((double)expirienceMonthComputed * 0.1);
                 Console.WriteLine("Ten Percent Count: " + tenPercentCount);
+                // если число месяцев для исключения больше 60 -
+                // устанавливаем вместо него максимально допустимое число 60
                 int exclusionsCountLimit = tenPercentCount;
                 if (exclusionsCountLimit > 60)
                 {
                     exclusionsCountLimit = 60;
                 }
                 Console.WriteLine("Max Exclusions Count Limit: " + exclusionsCountLimit);
-
+                // пока текущее число месяцев для исключения больше 0 -
+                // выполняем проходы сверху вниз по всему множеству коэффициентов,
+                // вычисляя для всех возможных диапазонов исключения
+                // среднее арифметическое из колонки коэффициентов
                 while (exclusionsCountLimit > 0)
                 {
+                    // номер строки верхней границы первого диапазона текущей размерности -
+                    // из номера первой строки, содержащей коэффициент 
                     int currentFirstRowNo = ratios.First().RowNo;
+                    // номер строки нижней границы первого диапазона текущей размерности -
+                    // сумма номера строки верхней границы
+                    // и максимально допустимого числа исключений
                     int currentLastRowNo = currentFirstRowNo + exclusionsCountLimit;
+                    // пока текущая нижняя граница не совпадет с номером последней строки
+                    // в колонке коэффициентов
                     while (currentLastRowNo <= ratios.Last().RowNo)
                     {
+                        // вычисляем среднее арифметическое из колонки коэффициентов,
+                        // исключая коэффициенты текущего диапазона исключения
                         double avgRatioAfterOptimization =
                                    ratios.Where(
                                         r => !Enumerable
                                                 .Range(currentFirstRowNo, currentLastRowNo)
                                                 .Contains(r.RowNo)
                                     ).Average(r => r.Ratio);
+                        // если получившееся среднее больше среднего из модели оптимального диапазона исключения -
+                        // записываем в модель это новое среднее
                         if (avgRatioAfterOptimization > optimalExclusionRange.AvgRatioAfterOptimization)
                         {
                             optimalExclusionRange.FirstRowNo = currentFirstRowNo;
                             optimalExclusionRange.LastRowNo = currentLastRowNo;
                             optimalExclusionRange.AvgRatioAfterOptimization = avgRatioAfterOptimization;
                         }
+                        // смещаем диапазон исключения вниз на одну строку
                         currentFirstRowNo++;
                         currentLastRowNo++;
 
                     }
+                    // уменьшаем размер диапазона исключения на одну строку
                     exclusionsCountLimit--;
                 }
-
+                // вычисляем среднее арифметическое коэффициентов до оптимизации
                 double avgRatioBeforeOptimization = ratios.Average(r => r.Ratio);
                 Console.WriteLine("Average Ratio Before Optimization: " + avgRatioBeforeOptimization);
                 Console.WriteLine("Optimal Exclusion Range: " + optimalExclusionRange);
-
                 // Marking
-                foreach (int exRowNo in Enumerable.Range(
-                        optimalExclusionRange.FirstRowNo,
-                        optimalExclusionRange.LastRowNo
-                    ))
+                for (int exRowNo = optimalExclusionRange.FirstRowNo; exRowNo <= optimalExclusionRange.LastRowNo; exRowNo++)
                 {
+                    // рядом с каждым исключенным коэффициентом,
+                    // отступив на две ячейки вправо,
+                    // отмечаем исключение знаком -
+                    Console.WriteLine("exRowNo = " + exRowNo);
                     array[exRowNo, ratiosColumnNo + 2] = "-";
                 }
                 oWorksheet.UsedRange.Value = array;
@@ -185,6 +209,7 @@ namespace PfuOptimizerWpf
                 oWorkbook.Save();
 
                 disposeResources();
+                resetForm();
             }
             catch (Exception ex)
             {
@@ -197,6 +222,12 @@ namespace PfuOptimizerWpf
                 this.Title = windowTitle;
                 disposeResources();
             }
+        }
+
+        private void resetForm() {
+            this.ratioColumnName = DEFAULT_RATIO_COLUMN_NAME;
+            this.experienceMonthString = "";
+            experienceMonthTextBox.Text = "";
         }
 
         private void disposeResources() {
@@ -222,6 +253,17 @@ namespace PfuOptimizerWpf
         {
             disposeResources();
             base.OnClosing(e);
+        }
+
+        private void ratioColumnNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Console.WriteLine(ratioColumnNameTextBox.Text);
+            this.ratioColumnName = ratioColumnNameTextBox.Text;
+        }
+
+        private void experienceMonthTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            this.experienceMonthString = experienceMonthTextBox.Text;
         }
     }
 }
