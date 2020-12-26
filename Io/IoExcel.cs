@@ -47,14 +47,18 @@ namespace PfuOptimizerWpf.Io
                                     && array[m, j + 1] != null)
                                 {
                                     // добавление модели сведений за месяц стажа в список
-                                    Console.WriteLine($"row{m} Y={array[m, 1]} M={array[m, 2]}");
+                                    // Console.WriteLine($"row{m} Y={array[m, 1]} M={array[m, 2]}");
                                     ratios.Add(
                                         new MonthModel()
                                         {
                                             RowNo = m,
                                             Ratio = (double)array[m, j],
                                             Year = UInt16.Parse(array[m, 1].ToString()),
-                                            Month = (string)array[m, 2]
+                                            Month = array[m, 2].ToString(),
+                                            MinSalaryUkraine = Double.Parse(array[m, 3].ToString()),
+                                            AvgSalaryUkraine = Double.Parse(array[m, 4].ToString()),
+                                            Income = Double.Parse(array[m, 5].ToString()),
+                                            Days = Int32.Parse(array[m, j + 1].ToString())
                                         }
                                     );
                                 }
@@ -84,13 +88,21 @@ namespace PfuOptimizerWpf.Io
             }
             newWorKsheeT.Cells[1, 1] = "Рік";
             newWorKsheeT.Cells[1, 2] = "Місяць";
-            newWorKsheeT.Cells[1, 3] = "Коефіцієнт ЗП місячний ***";
+            newWorKsheeT.Cells[1, 3] = "Мінімальна ЗП по НГ в Україні *";
+            newWorKsheeT.Cells[1, 4] = "Середня ЗП по НГ в Україні";
+            newWorKsheeT.Cells[1, 5] = "Заробіток, грн **";
+            newWorKsheeT.Cells[1, 6] = "Коефіцієнт ЗП місячний ***";
+            newWorKsheeT.Cells[1, 7] = "Зараховано до СС, днів *";
             int rowCount = 2;
             foreach (MonthModel ratio in selectedRatios)
             {
                 newWorKsheeT.Cells[rowCount, 1] = ratio.Year;
                 newWorKsheeT.Cells[rowCount, 2] = ratio.Month;
-                newWorKsheeT.Cells[rowCount, 3] = ratio.Ratio;
+                newWorKsheeT.Cells[rowCount, 3] = ratio.MinSalaryUkraine;
+                newWorKsheeT.Cells[rowCount, 4] = ratio.AvgSalaryUkraine;
+                newWorKsheeT.Cells[rowCount, 5] = ratio.Income;
+                newWorKsheeT.Cells[rowCount, 6] = ratio.Ratio;
+                newWorKsheeT.Cells[rowCount, 7] = ratio.Days;
                 rowCount++;
             }
             SaveFileDialog saveFileDialog = new SaveFileDialog();
