@@ -74,7 +74,14 @@ namespace PfuOptimizerWpf.Io
         {
             Workbook worKbooK = oApp.Workbooks.Add(Type.Missing);
             Worksheet newWorKsheeT = (Worksheet)worKbooK.ActiveSheet;
-            newWorKsheeT.Name = customerName + " (после обработки)";
+            try
+            {
+                newWorKsheeT.Name = customerName + " (после обработки)";
+            }
+            catch (Exception)
+            {
+                newWorKsheeT.Name = "Фамилия (после обработки)";
+            }
             newWorKsheeT.Cells[1, 1] = "Рік";
             newWorKsheeT.Cells[1, 2] = "Місяць";
             newWorKsheeT.Cells[1, 3] = "Коефіцієнт ЗП місячний ***";
@@ -90,7 +97,14 @@ namespace PfuOptimizerWpf.Io
             saveFileDialog.FileName = newWorKsheeT.Name + ".xlsx";
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
-                worKbooK.SaveAs(saveFileDialog.FileName);
+                try
+                {
+                    worKbooK.SaveAs(saveFileDialog.FileName);
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Невозможно сохранить файл. Возможно, он уже существует и открыт.");
+                }
             }
             worKbooK.Close();
         }

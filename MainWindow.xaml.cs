@@ -48,7 +48,7 @@ namespace PfuOptimizerWpf
         public MainWindow()
         {
             InitializeComponent();
-            ratioColumnNameTextBox.Text = DEFAULT_RATIO_COLUMN_NAME;
+            resetForm();
         }
 
         private void chooseTableButton_Click(object sender, RoutedEventArgs e)
@@ -60,11 +60,12 @@ namespace PfuOptimizerWpf
                 {
                     windowTitle = this.Title;
                     this.Title = "Загрузка файла ...";
-                    Console.WriteLine(openFileDialog.FileName);
-                    oApp = new Excel.Application();
-                    this.isDisposed = false;
+                    if (oApp == null)
+                    {
+                        oApp = new Excel.Application();
+                        this.isDisposed = false;
+                    }
                     // oApp.Visible = true;
-
                     oWorkbook = oApp.Workbooks.Open(openFileDialog.FileName);
                     List<string> sheetNames = new List<string>();
                     foreach (Worksheet worksheet in oWorkbook.Worksheets)
@@ -72,6 +73,9 @@ namespace PfuOptimizerWpf
                         sheetNames.Add(worksheet.Name);
                     }
                     sheetsComboBox.ItemsSource = sheetNames;
+                    sheetsComboBox.IsEnabled = true;
+                    ratioColumnNameTextBox.IsEnabled = true;
+                    experienceMonthTextBox.IsEnabled = true;
                 }
             }
             catch (Exception ex)
@@ -93,6 +97,7 @@ namespace PfuOptimizerWpf
             if (sheetsComboBox.SelectedValue != null)
             {
                 oWorksheet = oWorkbook.Worksheets[sheetsComboBox.SelectedValue];
+                optimizeButton.IsEnabled = true;
             }
         }
 
@@ -207,10 +212,15 @@ namespace PfuOptimizerWpf
         }
 
         private void resetForm() {
-            this.ratioColumnName = DEFAULT_RATIO_COLUMN_NAME;
+            // this.ratioColumnName = DEFAULT_RATIO_COLUMN_NAME;
+            ratioColumnNameTextBox.Text = DEFAULT_RATIO_COLUMN_NAME;
             this.experienceMonthString = "";
             experienceMonthTextBox.Text = "";
             sheetsComboBox.ItemsSource = null;
+            sheetsComboBox.IsEnabled = false;
+            ratioColumnNameTextBox.IsEnabled = false;
+            experienceMonthTextBox.IsEnabled = false;
+            optimizeButton.IsEnabled = false;
         }
 
         private void CloseTable() {
