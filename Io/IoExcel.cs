@@ -48,13 +48,39 @@ namespace PfuOptimizerWpf.Io
                                 {
                                     // добавление модели сведений за месяц стажа в список
                                     // Console.WriteLine($"row{m} Y={array[m, 1]} M={array[m, 2]}");
+                                    ushort year;
+                                    string month;
+                                    // если в первой колонке - год, то он копируется в поле Year,
+                                    // и название месяца - из следующей колонки - в поле Month,
+                                    // иначе из значения в первой колонке извлекаются два символа,
+                                    // начиная с четвертого (индекс 3),
+                                    // по которым определяется название месяца,
+                                    // а также извлекаются четыре символа,
+                                    // начиная с седьмого (индекс 6),
+                                    // по которым определяется год
+                                    if (!UInt16.TryParse(array[m, 1].ToString(), out year))
+                                    {
+                                        // Console.WriteLine($"{array[m, 1].ToString().Substring(3, 2)} - {array[m, 1].ToString().Substring(6, 4)}");
+                                        MonthNameModel monthNameModel =
+                                            StaticInfo.GetUkrainianMonths()
+                                                .Where(monthModel =>
+                                                    monthModel.No == UInt16.Parse(array[m, 1].ToString().Substring(3, 2))
+                                                )
+                                                .SingleOrDefault();
+                                        year = UInt16.Parse(array[m, 1].ToString().Substring(6, 4));
+                                        month = monthNameModel.Month;
+                                    }
+                                    else {
+                                        month = array[m, 2].ToString();
+                                    }
+                                    Console.WriteLine($"{m} {year} {month} {array[m, 3].ToString()} {array[m, 4].ToString()} {array[m, 5].ToString()} {array[m, j]} {array[m, j + 1].ToString()}");
                                     ratios.Add(
                                         new MonthModel()
                                         {
                                             RowNo = m,
                                             Ratio = (double)array[m, j],
-                                            Year = UInt16.Parse(array[m, 1].ToString()),
-                                            Month = array[m, 2].ToString(),
+                                            Year = year,
+                                            Month = month,
                                             MinSalaryUkraine = Double.Parse(array[m, 3].ToString()),
                                             AvgSalaryUkraine = Double.Parse(array[m, 4].ToString()),
                                             Income = Double.Parse(array[m, 5].ToString()),
