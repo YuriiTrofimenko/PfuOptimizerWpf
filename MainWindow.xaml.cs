@@ -44,7 +44,7 @@ namespace PfuOptimizerWpf
         private string ratioColumnName;
         private string experienceMonthString = "";
 
-        private string windowTitle;
+        private string windowTitle = "";
         public MainWindow()
         {
             InitializeComponent();

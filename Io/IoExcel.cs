@@ -95,7 +95,8 @@ namespace PfuOptimizerWpf.Io
             }
             return null;
         }
-
+        // вывод списка отобранных месяцев стажа
+        // в новый файл электронной таблицы
         public static void WriteSelectedMonthRatios(
             _Application oApp,
             string customerName,
@@ -131,6 +132,16 @@ namespace PfuOptimizerWpf.Io
                 newWorKsheeT.Cells[rowCount, 7] = ratio.Days;
                 rowCount++;
             }
+            // вставка формул суммарного коэффициента
+            // и среднего арифметического всех коэффициентов
+            Console.WriteLine("F" + rowCount, "F" + rowCount);
+            Console.WriteLine("F" + (rowCount + 1), "F" + (rowCount + 1));
+            Console.WriteLine("=SUM(F2:F" + (rowCount - 1) + ")");
+            Console.WriteLine("=F" + rowCount + "/" + (rowCount - 2));
+            Range sumRange = newWorKsheeT.get_Range("F" + rowCount, "F" + rowCount);
+            Range avgRange = newWorKsheeT.get_Range("F" + (rowCount + 1), "F" + (rowCount + 1));
+            sumRange.Formula = "=SUM(F2:F" + (rowCount - 1) + ")";
+            avgRange.Formula = "=F" + rowCount + "/" + (rowCount - 2);
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.FileName = newWorKsheeT.Name + ".xlsx";
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
